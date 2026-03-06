@@ -1,0 +1,84 @@
+{
+  "name": "developer-one-click-setup-manager",
+  "version": "1.0.1",
+  "description": "Automated Developer Environment Installer using winget",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:vite": "vite",
+    "dev:electron": "wait-on http://localhost:3000 && electron .",
+    "build": "vite build",
+    "build:web": "cross-env VITE_BASE=/ vite build",
+    "preview": "vite preview",
+    "electron:clean": "node scripts/clean-electron.cjs",
+    "electron:build": "npm run build && node scripts/clean-electron.cjs && electron-builder",
+    "start": "electron ."
+  },
+  "keywords": [
+    "winget",
+    "developer",
+    "setup",
+    "electron"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.1.7",
+    "lucide-react": "^0.575.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
+    "dotenv-cli": "^11.0.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "png-to-ico": "^2.0.1",
+    "sharp": "^0.34.5",
+    "vite": "^5.0.0",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.devonboard.setup-manager",
+    "artifactName": "DevOnboard-Setup.${ext}",
+    "productName": "DevOnboard",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "build/icon.ico"
+    ],
+    "asarUnpack": [
+      "dist/**",
+      "build/**",
+      "electron/**"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "signAndEditExecutable": false,
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DevOnboard",
+      "license": "build/license.txt",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    }
+  }
+}
