@@ -2,11 +2,15 @@ import { useEffect, useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { loadSettings } from '../lib/settings';
 import { getEstimatedInstallMinutes } from '../lib/catalog';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../components/Notifications';
 
 type QueueStatus = 'pending' | 'installing' | 'installed' | 'failed';
 
 export function InstallationQueue() {
   const { state, markInstalled, markUninstalled, addActivity, clearQueue, removeFromSelection } = useApp();
+  const { refreshSubscription } = useAuth();
+  const { notifyLocked } = useNotifications();
   const [statuses, setStatuses] = useState<Record<string, QueueStatus>>({});
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -51,6 +55,21 @@ export function InstallationQueue() {
         setStatuses((s) => ({ ...s, [item.id]: 'installed' }));
         continue;
       }
+      if (api?.checkInstallAllowed) {
+        const gate = await api.checkInstallAllowed();
+        if (!gate.allowed) {
+          notifyLocked(gate.reason || 'Install limit reached. Upgrade to continue.');
+          setStatuses((s) => ({ ...s, [item.id]: 'failed' }));
+          addActivity({
+            type: 'failed',
+            title: `${item.name} blocked`,
+            message: gate.reason || 'Install blocked by subscription limit.',
+            time: 'Just now',
+          });
+          hadFailure = true;
+          break;
+        }
+      }
       setCurrentId(item.id);
       setStatuses((s) => ({ ...s, [item.id]: 'installing' }));
 
@@ -62,6 +81,9 @@ export function InstallationQueue() {
             installedThisRunRef.current.add(item.id);
             setStatuses((s) => ({ ...s, [item.id]: 'installed' }));
             markInstalled(item.id);
+            if (api.recordInstall) {
+              try { await api.recordInstall(); } catch { }
+            }
             addActivity({
               type: 'installed',
               title: `${item.name} Installed`,
@@ -130,6 +152,7 @@ export function InstallationQueue() {
       setJustCompleted(false);
       setCompletedStatus(null);
     }, 1800);
+    refreshSubscription();
   };
 
   useEffect(() => {
@@ -140,8 +163,17 @@ export function InstallationQueue() {
     }
   }, [queue.length, running]);
 
-  const startInstall = () => {
-    if (queue.length > 0 && !running) runQueue();
+  const startInstall = async () => {
+    if (!(queue.length > 0 && !running)) return;
+    const api = window.electronAPI;
+    if (api?.checkInstallAllowed) {
+      const gate = await api.checkInstallAllowed();
+      if (!gate.allowed) {
+        notifyLocked(gate.reason || 'You cannot install software on your current plan.');
+        return;
+      }
+    }
+    runQueue();
   };
 
   const currentItem = currentId ? queue.find((q) => q.id === currentId) : null;

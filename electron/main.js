@@ -3,6 +3,14 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const Store = require('electron-store');
+const { startGoogleSignIn } = require('./auth');
+const subscription = require('./subscription');
+const { startVerifiedCheckout } = require('./stripe');
+
+const PLAN_TO_PRICE = {
+  pro: { priceId: () => process.env.STRIPE_PRICE_PRO, mode: 'subscription' },
+  lifetime: { priceId: () => process.env.STRIPE_PRICE_LIFETIME, mode: 'payment' },
+};
 
 try {
   const dotenv = require('dotenv');
@@ -12,14 +20,51 @@ try {
 
 const isDev = !app.isPackaged;
 
-const DEV_URL = 'http://localhost:3000';
-const PROD_URL = 'https://dev-onboardv3.netlify.app/';
+const DEV_URL = process.env.DEV_URL || 'http://localhost:3000';
+const PROD_INDEX_PATH = path.join(__dirname, '..', 'dist', 'index.html');
 
 const store = new Store({ name: 'devonboard-config' });
 
 let mainWindow;
 let splashWindow;
 let onboardingWindow;
+let currentInstallProc = null;
+
+// On some Windows setups, the default Chromium cache/userData location can end up locked or non-writable,
+// which causes navigation to fail with ERR_FAILED (-2). Use a dedicated dev-only userData path.
+if (isDev) {
+  try {
+    app.setPath('userData', path.join(app.getPath('temp'), 'DevOnboard-dev-userData'));
+  } catch (_) { }
+}
+
+function getAppUrl(route = '/') {
+  const safeRoute = route.startsWith('/') ? route : `/${route}`;
+  if (isDev) return `${DEV_URL}/#${safeRoute}`;
+  return `file://${PROD_INDEX_PATH}#${safeRoute}`;
+}
+
+function getHashForRoute(route = '/') {
+  const safeRoute = route.startsWith('/') ? route : `/${route}`;
+  return `#${safeRoute}`;
+}
+
+async function loadRoute(win, route = '/') {
+  if (!win || win.isDestroyed()) return;
+  if (isDev) {
+    // Some Electron builds can intermittently fail `loadURL()` when a hash route is included.
+    // Load the origin first, then set the hash in-page.
+    await win.loadURL(`${DEV_URL}/`);
+    await new Promise((resolve) => {
+      if (win.webContents.isLoading()) win.webContents.once('did-finish-load', resolve);
+      else resolve();
+    });
+    const hash = getHashForRoute(route);
+    await win.webContents.executeJavaScript(`location.hash = ${JSON.stringify(hash)};`, true);
+    return;
+  }
+  await win.loadURL(getAppUrl(route));
+}
 
 function getPreloadPath() {
   if (app.isPackaged) {
@@ -55,8 +100,7 @@ function createMainWindow() {
     show: false,
   });
 
-  const loadUrl = isDev ? DEV_URL : PROD_URL;
-  mainWindow.loadURL(loadUrl).catch((err) => console.error('Failed to load URL:', err));
+  loadRoute(mainWindow, '/').catch((err) => console.error('Failed to load URL:', err));
   mainWindow.webContents.on('did-fail-load', (_, errorCode, errorDescription, validatedURL) => {
     console.error('did-fail-load:', { errorCode, errorDescription, validatedURL });
   });
@@ -85,8 +129,21 @@ function createSplashWindow() {
     title: 'DevOnboard',
   });
 
-  const loadUrl = isDev ? DEV_URL : PROD_URL;
-  splashWindow.loadURL(loadUrl + '/splash').catch((err) => console.error('Splash load error:', err));
+  let splashRetried = false;
+  splashWindow.webContents.on('did-fail-load', (_, errorCode, errorDescription, validatedURL) => {
+    // Note: for hash-based routes, `validatedURL` is usually just the origin (no hash),
+    // so don't filter on `/splash` here.
+    if (!splashRetried && errorCode === -2) {
+      splashRetried = true;
+      setTimeout(() => {
+        if (!splashWindow || splashWindow.isDestroyed()) return;
+        loadRoute(splashWindow, '/splash').catch((err) => console.error('Splash retry load error:', err));
+      }, 800);
+      return;
+    }
+    console.error('Splash load error:', { errorCode, errorDescription, validatedURL });
+  });
+  loadRoute(splashWindow, '/splash').catch((err) => console.error('Splash load error:', err));
   splashWindow.on('closed', () => { splashWindow = null; });
 
   const SPLASH_DELAY_MS = 2500;
@@ -111,7 +168,7 @@ function createSplashWindow() {
         title: 'DevOnboard - Setup',
         show: false,
       });
-      onboardingWindow.loadURL(loadUrl + '/onboarding').catch((err) => console.error('Onboarding load error:', err));
+      loadRoute(onboardingWindow, '/onboarding').catch((err) => console.error('Onboarding load error:', err));
       onboardingWindow.once('ready-to-show', () => {
         onboardingWindow.show();
       });
@@ -125,7 +182,6 @@ function createOnboardingWindow() {
   if (onboardingWindow && !onboardingWindow.isDestroyed()) return;
   const iconPath = path.join(__dirname, '..', 'build', 'icon.ico');
   const winIcon = fs.existsSync(iconPath) ? nativeImage.createFromPath(iconPath) : null;
-  const loadUrl = isDev ? DEV_URL : PROD_URL;
 
   onboardingWindow = new BrowserWindow({
     width: 900,
@@ -142,7 +198,7 @@ function createOnboardingWindow() {
     title: 'DevOnboard - Setup',
     show: false,
   });
-  onboardingWindow.loadURL(loadUrl + '/onboarding').catch((err) => console.error('Onboarding load error:', err));
+  loadRoute(onboardingWindow, '/onboarding').catch((err) => console.error('Onboarding load error:', err));
   onboardingWindow.once('ready-to-show', () => onboardingWindow.show());
   onboardingWindow.on('closed', () => { onboardingWindow = null; });
 }
@@ -175,6 +231,33 @@ ipcMain.handle('onboarding:complete', () => {
 
 ipcMain.handle('open-external', (_, url) => {
   if (url && typeof url === 'string') shell.openExternal(url).catch(() => { });
+});
+
+ipcMain.handle('catalog:list', async () => {
+  const packagedCandidates = [
+    path.join(app.getAppPath(), 'dist', 'software-list.json'),
+    path.join(app.getAppPath(), 'public', 'software-list.json'),
+    path.join(__dirname, '..', 'dist', 'software-list.json'),
+    path.join(__dirname, '..', 'public', 'software-list.json'),
+  ];
+  const devCandidates = [
+    path.join(__dirname, '..', 'public', 'software-list.json'),
+    path.join(__dirname, '..', 'dist', 'software-list.json'),
+    path.join(app.getAppPath(), 'public', 'software-list.json'),
+    path.join(app.getAppPath(), 'dist', 'software-list.json'),
+  ];
+  const candidates = isDev ? devCandidates : packagedCandidates;
+  for (const filePath of candidates) {
+    try {
+      if (!fs.existsSync(filePath)) continue;
+      const raw = fs.readFileSync(filePath, 'utf8');
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    } catch (_) {
+      // Try next candidate path.
+    }
+  }
+  return [];
 });
 
 ipcMain.handle('run-powershell-script', async (_, script) => {
@@ -318,6 +401,7 @@ ipcMain.handle('winget:install', async (_, { wingetId, version }) => {
       shell: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
+    currentInstallProc = proc;
 
     let stdout = '';
     let stderr = '';
@@ -338,11 +422,27 @@ ipcMain.handle('winget:install', async (_, { wingetId, version }) => {
     });
 
     proc.on('close', (code) => {
+      currentInstallProc = null;
       if (code === 0) resolve({ success: true, stdout, stderr });
       else resolve({ success: false, code, stdout, stderr });
     });
-    proc.on('error', (err) => reject(err));
+    proc.on('error', (err) => {
+      currentInstallProc = null;
+      reject(err);
+    });
   });
+});
+
+ipcMain.handle('winget:cancelInstall', async () => {
+  if (!currentInstallProc) {
+    return { cancelled: false, reason: 'no-process' };
+  }
+  try {
+    currentInstallProc.kill();
+    return { cancelled: true };
+  } catch (err) {
+    return { cancelled: false, error: String(err) };
+  }
 });
 
 let autoUpdaterRef = null;
@@ -367,4 +467,93 @@ if (app.isPackaged) {
 ipcMain.handle('update:check', () => (autoUpdaterRef ? autoUpdaterRef.checkForUpdates().catch(() => null) : Promise.resolve(null)));
 ipcMain.handle('update:quitAndInstall', () => {
   if (autoUpdaterRef) autoUpdaterRef.quitAndInstall(false, true);
+});
+
+ipcMain.handle('auth:status', () => {
+  const user = store.get('authUser', null);
+  if (!user) return { signedIn: false, user: null, subscription: subscription.summarize(null) };
+  const profile = subscription.ensureProfile(store, user.id);
+  return { signedIn: true, user, subscription: subscription.summarize(profile) };
+});
+
+ipcMain.handle('auth:google', async () => {
+  try {
+    const result = await startGoogleSignIn();
+    store.set('authUser', result.user);
+    store.set(`authTokens:${result.user.id}`, result.tokens);
+    const profile = subscription.ensureProfile(store, result.user.id);
+    return { ok: true, user: result.user, subscription: subscription.summarize(profile) };
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle('auth:signOut', () => {
+  const user = store.get('authUser', null);
+  if (user && user.id) store.delete(`authTokens:${user.id}`);
+  store.delete('authUser');
+  return { ok: true };
+});
+
+ipcMain.handle('subscription:get', () => {
+  const user = store.get('authUser', null);
+  if (!user) return { subscription: subscription.summarize(null) };
+  const profile = subscription.ensureProfile(store, user.id);
+  return { subscription: subscription.summarize(profile) };
+});
+
+ipcMain.handle('subscription:checkInstall', () => {
+  const user = store.get('authUser', null);
+  if (!user) return { allowed: false, reason: 'Sign in to install software.' };
+  const profile = subscription.ensureProfile(store, user.id);
+  return subscription.canInstall(profile);
+});
+
+ipcMain.handle('subscription:checkManage', () => {
+  const user = store.get('authUser', null);
+  if (!user) return { allowed: false, reason: 'Sign in to manage installed software.' };
+  const profile = subscription.ensureProfile(store, user.id);
+  return subscription.canManage(profile);
+});
+
+ipcMain.handle('subscription:recordInstall', () => {
+  const user = store.get('authUser', null);
+  if (!user) return { ok: false };
+  const profile = subscription.incrementInstall(store, user.id);
+  return { ok: true, subscription: subscription.summarize(profile) };
+});
+
+ipcMain.handle('subscription:startCheckout', async (_, { planId }) => {
+  const user = store.get('authUser', null);
+  if (!user) return { ok: false, status: 'unauthenticated', error: 'You must be signed in to subscribe.' };
+  const mapping = PLAN_TO_PRICE[planId];
+  if (!mapping) return { ok: false, status: 'error', error: `Unknown plan: ${planId}` };
+  const priceId = mapping.priceId();
+  if (!priceId) {
+    return {
+      ok: false,
+      status: 'error',
+      error: `Missing STRIPE_PRICE_${planId.toUpperCase()} in .env`,
+    };
+  }
+  try {
+    const result = await startVerifiedCheckout({
+      priceId,
+      mode: mapping.mode,
+      user,
+      planId,
+    });
+    if (result.status === 'paid') {
+      const receipt = result.session && result.session.id ? result.session.id : null;
+      const profile = subscription.activatePaidPlan(store, user.id, planId, receipt);
+      const summary = subscription.summarize(profile);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('subscription:updated', summary);
+      }
+      return { ok: true, status: 'paid', subscription: summary };
+    }
+    return { ok: false, status: result.status, error: result.error };
+  } catch (err) {
+    return { ok: false, status: 'error', error: err && err.message ? err.message : String(err) };
+  }
 });

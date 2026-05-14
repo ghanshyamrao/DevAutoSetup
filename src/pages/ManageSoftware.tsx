@@ -3,6 +3,8 @@ import { Trash2, Box } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { fetchAllSoftware, type SoftwareItem } from '../lib/catalog';
 import { getSoftwareIcon } from '../lib/softwareIcons';
+import { useAuth } from '../context/AuthContext';
+import { LockedPanel } from '../components/LockedPanel';
 
 type SystemEntry = { id: string; name: string };
 
@@ -13,6 +15,23 @@ type ListItem =
   | { type: 'system'; entry: SystemEntry };
 
 export function ManageSoftware() {
+  const { subscription } = useAuth();
+  if (!subscription.manageEnabled) {
+    return (
+      <LockedPanel
+        title="Manage Software is locked"
+        message={
+          subscription.planId === 'free'
+            ? 'Manage Software is a paid feature. Upgrade to Pro or Lifetime to uninstall, swap versions, and clean up packages.'
+            : 'Your Pro subscription has expired. Renew to regain access to Manage Software.'
+        }
+      />
+    );
+  }
+  return <ManageSoftwareInner />;
+}
+
+function ManageSoftwareInner() {
   const { state, markUninstalled, addActivity } = useApp();
   const [catalogList, setCatalogList] = useState<SoftwareItem[]>([]);
   const [systemEntries, setSystemEntries] = useState<SystemEntry[]>([]);

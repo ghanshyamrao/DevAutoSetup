@@ -1,12 +1,12 @@
 {
   "name": "developer-one-click-setup-manager",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Automated Developer Environment Installer using winget",
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
-    "dev:vite": "vite",
-    "dev:electron": "wait-on http://localhost:3000 && electron .",
+    "dev:vite": "vite --port 3000 --strictPort",
+    "dev:electron": "wait-on http://localhost:3000 && set \"DEV_URL=http://localhost:3000\" && electron .",
     "build": "vite build",
     "build:web": "cross-env VITE_BASE=/ vite build",
     "preview": "vite preview",

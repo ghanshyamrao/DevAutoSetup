@@ -1,8 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Outlet } from 'react-router-dom';
-import { WifiOff, RefreshCw, Settings } from 'lucide-react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { WifiOff, RefreshCw, Settings, Crown, LogOut, User } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { APP_NAME } from '../lib/appInfo';
+import { useAuth } from '../context/AuthContext';
+import { useTrialExpiringWarning } from './Notifications';
+import { expiryBadge, installsBadge } from '../lib/entitlements';
 
 const SIDEBAR_WIDTH = 220;
 
@@ -17,6 +20,11 @@ export function Layout() {
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
   const [retrying, setRetrying] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, subscription, signOut } = useAuth();
+
+  useTrialExpiringWarning(subscription.daysRemaining, subscription.planId);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -28,6 +36,13 @@ export function Layout() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuOpen]);
 
   const tryAgain = useCallback(async () => {
     setRetrying(true);
@@ -50,6 +65,11 @@ export function Layout() {
       window.electronAPI.openExternal('ms-settings:network');
     }
   }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login', { replace: true });
+  };
 
   if (!isOnline) {
     return (
@@ -176,14 +196,162 @@ export function Layout() {
     );
   }
 
+  const trialExpired = subscription.expired && subscription.planId !== 'lifetime' && subscription.planId !== 'free';
+
   return (
     <div style={{ display: 'flex', flex: 1, minHeight: '100vh', flexDirection: 'column', overflow: 'hidden' }}>
       <Sidebar style={{ position: 'fixed', left: 0, top: 0, bottom: 0, width: SIDEBAR_WIDTH, flexShrink: 0, overflow: 'hidden', zIndex: 10 }} />
       <main style={{ flex: 1, marginLeft: SIDEBAR_WIDTH, padding: 24, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <header
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 12,
+            marginBottom: 16,
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => navigate('/pricing')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 999,
+              background: trialExpired ? 'rgba(239, 68, 68, 0.15)' : 'rgba(139, 92, 246, 0.14)',
+              border: `1px solid ${trialExpired ? 'var(--error)' : 'var(--accent)'}`,
+              color: trialExpired ? 'var(--error)' : 'var(--accent)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+            title={`${subscription.planLabel} - ${installsBadge(subscription)}`}
+          >
+            <Crown size={14} />
+            {trialExpired ? 'Plan expired - upgrade' : `${subscription.planLabel} - ${expiryBadge(subscription) || installsBadge(subscription)}`}
+          </button>
+          {user && (
+            <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '4px 10px 4px 4px',
+                  borderRadius: 999,
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                {user.picture ? (
+                  <img
+                    src={user.picture}
+                    alt=""
+                    width={26}
+                    height={26}
+                    style={{ borderRadius: '50%' }}
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50%',
+                      background: 'var(--accent)',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {user.name?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
+                <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.name}
+                </span>
+              </button>
+              {menuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    right: 0,
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius)',
+                    minWidth: 200,
+                    padding: 6,
+                    boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
+                    zIndex: 50,
+                  }}
+                >
+                  <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{user.email}</div>
+                  </div>
+                  <MenuButton Icon={User} label="My account" onClick={() => { setMenuOpen(false); navigate('/account'); }} />
+                  <MenuButton Icon={Crown} label="Plans & pricing" onClick={() => { setMenuOpen(false); navigate('/pricing'); }} />
+                  <MenuButton Icon={LogOut} label="Sign out" onClick={() => { setMenuOpen(false); handleSignOut(); }} danger />
+                </div>
+              )}
+            </div>
+          )}
+        </header>
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
           <Outlet />
         </div>
       </main>
     </div>
+  );
+}
+
+function MenuButton({
+  Icon,
+  label,
+  onClick,
+  danger,
+}: {
+  Icon: typeof User;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        width: '100%',
+        padding: '8px 10px',
+        background: 'transparent',
+        border: 'none',
+        color: danger ? 'var(--error)' : 'var(--text-primary)',
+        fontSize: 13,
+        textAlign: 'left',
+        borderRadius: 6,
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-primary)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+    >
+      <Icon size={15} />
+      <span>{label}</span>
+    </button>
   );
 }

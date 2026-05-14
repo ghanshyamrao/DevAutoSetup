@@ -12,6 +12,6 @@ export const APP_DESCRIPTION =
 
 export const APP_AUTHOR = 'Ghanshyam Rao';
 
-export const APP_AUTHOR_EMAIL = 'ghanshyam.rao@example.com';
+export const APP_AUTHOR_EMAIL = 'ghanshyamrao108@gmail.com';
 
 export const APP_LICENSE = 'MIT';

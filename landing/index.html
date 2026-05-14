@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DevOnboard – Zero to Coding in 60 Seconds</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <header class="header">
@@ -24,14 +26,47 @@
         <span>DevOnboard</span>
       </a>
       <nav class="nav">
-        <a href="#pricing">Pricing</a>
         <a href="#features">Features</a>
-        <a href="#">Docs</a>
-        <a href="#">Blog</a>
+        <a href="#pricing">Pricing</a>
+        <a href="docs.html">Docs</a>
+        <a href="coming-soon.html">Blog</a>
       </nav>
+      <a
+        href="https://github.com/ghanshyamrao/DevAutoSetup/releases/download/2.0.0/DevOnboard-Setup.exe"
+        class="build-alert"
+        download
+      >
+        <span class="build-alert__dot" aria-hidden></span>
+        <span>v2.0.0 available</span>
+        <strong>Click to install</strong>
+      </a>
       <div class="header-actions">
-        <a href="#" class="btn btn-ghost">Login</a>
-        <a href="#" class="btn btn-primary">Get Started</a>
+        <div class="auth-slot" data-signed-out>
+          <div id="gsiHeaderBtn" class="gsi-btn-wrap" aria-label="Sign in with Google"></div>
+        </div>
+        <div class="auth-slot user-pill" data-signed-in hidden>
+          <button type="button" class="user-pill__trigger" id="userPillTrigger" aria-haspopup="menu" aria-expanded="false">
+            <img class="user-pill__avatar" id="userAvatar" alt="" referrerpolicy="no-referrer" />
+            <span class="user-pill__name" id="userName">Account</span>
+            <svg class="user-pill__chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div class="user-menu" id="userMenu" role="menu" hidden>
+            <div class="user-menu__head">
+              <div class="user-menu__name" id="userMenuName"></div>
+              <div class="user-menu__email" id="userMenuEmail"></div>
+            </div>
+            <a class="user-menu__item" href="#pricing" role="menuitem">Plans &amp; Pricing</a>
+            <a class="user-menu__item user-menu__item--primary" id="userMenuDownload" href="https://github.com/ghanshyamrao/DevAutoSetup/releases/download/2.0.0/DevOnboard-Setup.exe" role="menuitem" download>Download DevOnboard</a>
+            <button type="button" class="user-menu__item user-menu__item--danger" id="signOutBtn" role="menuitem">Sign out</button>
+          </div>
+        </div>
+        <a
+          href="https://github.com/ghanshyamrao/DevAutoSetup/releases/download/2.0.0/DevOnboard-Setup.exe"
+          class="btn btn-primary"
+          download
+        >Get Started</a>
       </div>
     </div>
   </header>
@@ -47,16 +82,16 @@
           DevOnboard automates your entire development environment setup. Install runtimes, tools, and dependencies with one click. Get your team coding in under a minute.
         </p>
         <div class="hero-actions">
-          <a href="https://github.com/ghanshyamrao/DevOnboard/releases/download/v1.0.0/DevOnboardv3-Setup.exe"
+          <a href="https://github.com/ghanshyamrao/DevAutoSetup/releases/download/2.0.0/DevOnboard-Setup.exe"
           class="btn btn-primary btn-lg"
           download>
           Download Now
        </a>
-          <a href="#features" class="btn btn-outline btn-lg">Watch Demo</a>
+          <a href="#" class="btn btn-outline btn-lg" id="openDemoModal">Watch Demo</a>
         </div>
-        <p class="hero-note">No credit card required</p>
+        <p class="hero-note">Free forever for 3 installs · No credit card required</p>
         <div class="hero-screenshot reveal">
-          <img src="assets/dashboard-screenshot.png" alt="DevOnboard Dashboard – system checks, software overview, recent activity" class="screenshot-img" />
+          <img src="assets/Screenshot%202026-02-25%20183003.png" alt="DevOnboard Dashboard – software catalog and installation view" class="screenshot-img" />
         </div>
       </div>
     </section>
@@ -82,7 +117,7 @@
         </div>
         <div class="feature-visual reveal">
           <div class="screenshot-wrap screenshot-glow">
-            <img src="assets/catalog-screenshot.png" alt="DevOnboard software catalog – browse and install dev tools via winget" class="screenshot-img screenshot-img-sm" />
+            <img src="assets/Screenshot%202026-02-25%20225201.png" alt="DevOnboard software catalog – browse and install dev tools via winget" class="screenshot-img screenshot-img-sm" />
           </div>
         </div>
       </div>
@@ -92,7 +127,7 @@
       <div class="container section-inner">
         <div class="feature-visual reveal">
           <div class="screenshot-wrap">
-            <img src="assets/diagnostics-screenshot.png" alt="DevOnboard diagnostics – system health checks and repair" class="screenshot-img screenshot-img-sm" />
+            <img src="assets/Screenshot%202026-02-25%20211918.png" alt="DevOnboard diagnostics – system health checks and repair" class="screenshot-img screenshot-img-sm" />
           </div>
         </div>
         <div class="feature-content reveal">
@@ -112,13 +147,87 @@
           From a single developer to entire teams, get everyone on the same stack in minutes.
         </p>
         <div class="card-grid">
-          <div class="card reveal"><div class="card-icon">⚡</div><h3>Full-Stack Templates</h3><p>Predefined catalogs and one-click installs for common dev stacks.</p></div>
-          <div class="card reveal"><div class="card-icon">📦</div><h3>Curated Catalogs</h3><p>One app to install and manage all your dev tools and runtimes.</p></div>
-          <div class="card reveal"><div class="card-icon">🔧</div><h3>Component Library</h3><p>Winget-powered installs with queue, logs, and activity tracking.</p></div>
-          <div class="card reveal"><div class="card-icon">🛡</div><h3>Secure by Default</h3><p>Admin elevation and permissions handled transparently.</p></div>
-          <div class="card reveal"><div class="card-icon">📋</div><h3>Manage Software</h3><p>Uninstall and manage only what you installed via DevOnboard.</p></div>
+          <div class="card reveal"><div class="card-icon">⚡</div><h3>One-Click Install</h3><p>Predefined catalogs and one-click installs for common dev stacks.</p></div>
+          <div class="card reveal"><div class="card-icon">📦</div><h3>Curated Catalog</h3><p>One app to install and manage all your dev tools and runtimes.</p></div>
+          <div class="card reveal"><div class="card-icon">🔑</div><h3>Google Sign-In</h3><p>Secure OAuth via Google – no passwords, accounts sync with your plan.</p></div>
+          <div class="card reveal"><div class="card-icon">🛡</div><h3>Verified Checkout</h3><p>Stripe-powered upgrades. Plans only activate after Stripe confirms payment.</p></div>
+          <div class="card reveal"><div class="card-icon">📋</div><h3>Manage Software</h3><p>Uninstall and manage only what you installed via DevOnboard (Pro & Lifetime).</p></div>
           <div class="card reveal"><div class="card-icon">🎨</div><h3>Dark Theme</h3><p>Modern minimal UI with purple accents and clean typography.</p></div>
         </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="section section-pricing">
+      <div class="container">
+        <h2 class="section-title center reveal">Simple, transparent pricing</h2>
+        <p class="section-text center section-intro reveal">
+          Start free with 3 installs. Upgrade inside the app whenever you need more — payments are processed by Stripe and verified server-side.
+        </p>
+        <div class="pricing-grid">
+          <div class="pricing-card reveal">
+            <div class="pricing-name">Free</div>
+            <div class="pricing-tagline">For trying DevOnboard</div>
+            <div class="pricing-price">
+              <span class="pricing-amount">$0</span>
+              <span class="pricing-cadence">forever</span>
+            </div>
+            <ul class="pricing-features">
+              <li>Browse the full software catalog</li>
+              <li>Install up to <strong>3 applications</strong></li>
+              <li>Single-click setup via winget</li>
+              <li class="pricing-feature-muted">Manage Software locked</li>
+            </ul>
+            <a
+              href="https://github.com/ghanshyamrao/DevAutoSetup/releases/download/2.0.0/DevOnboard-Setup.exe"
+              class="btn btn-outline pricing-cta"
+              download
+            >Download free</a>
+          </div>
+
+          <div class="pricing-card pricing-card-highlight reveal">
+            <span class="pricing-badge">Most popular</span>
+            <div class="pricing-name">Pro</div>
+            <div class="pricing-tagline">For active developers</div>
+            <div class="pricing-price">
+              <span class="pricing-amount">$25</span>
+              <span class="pricing-cadence">per month</span>
+            </div>
+            <ul class="pricing-features">
+              <li><strong>Unlimited</strong> installs every month</li>
+              <li>Full <strong>Manage Software</strong> access</li>
+              <li>Catalog updates &amp; version pinning</li>
+              <li>Cancel any time</li>
+            </ul>
+            <a
+              href="https://github.com/ghanshyamrao/DevAutoSetup/releases/download/2.0.0/DevOnboard-Setup.exe"
+              class="btn btn-primary pricing-cta"
+              download
+            >Get Pro</a>
+          </div>
+
+          <div class="pricing-card reveal">
+            <div class="pricing-name">Lifetime</div>
+            <div class="pricing-tagline">Best for power users</div>
+            <div class="pricing-price">
+              <span class="pricing-amount">$100</span>
+              <span class="pricing-cadence">one-time</span>
+            </div>
+            <ul class="pricing-features">
+              <li><strong>Lifetime</strong> access, no renewals</li>
+              <li>Unlimited installs forever</li>
+              <li>All future updates included</li>
+              <li>Full Manage Software access</li>
+            </ul>
+            <a
+              href="https://github.com/ghanshyamrao/DevAutoSetup/releases/download/2.0.0/DevOnboard-Setup.exe"
+              class="btn btn-outline pricing-cta"
+              download
+            >Buy Lifetime</a>
+          </div>
+        </div>
+        <p class="pricing-footnote reveal">
+          Paid plans are activated inside DevOnboard: download the app, sign in with Google, then click <strong>Subscribe via Stripe</strong>. Your plan flips on automatically when Stripe confirms the payment.
+        </p>
       </div>
     </section>
 
@@ -127,12 +236,12 @@
         <div class="cta-box reveal">
           <h2 class="cta-title">Ready to streamline your team's setup?</h2>
           <p class="cta-text">Download DevOnboard and get from zero to coding in 60 seconds.</p>
-          <a href="https://github.com/ghanshyamrao/DevOnboard/releases/download/v1.0.0/DevOnboardv3-Setup.exe"
+          <a href="https://github.com/ghanshyamrao/DevAutoSetup/releases/download/2.0.0/DevOnboard-Setup.exe"
           class="btn btn-primary btn-lg"
           download>
           Download Now
        </a>
-          <p class="cta-note">No credit card required</p>
+          <p class="cta-note">Free forever for 3 installs · No credit card required</p>
         </div>
       </div>
     </section>
@@ -159,33 +268,53 @@
           <h4>Product</h4>
           <a href="#features">Features</a>
           <a href="#pricing">Pricing</a>
-          <a href="#">Changelog</a>
+          <a href="coming-soon.html">Changelog</a>
         </div>
         <div class="footer-col">
           <h4>Resources</h4>
-          <a href="#">Blog</a>
-          <a href="#">Docs</a>
-          <a href="#">Support</a>
+          <a href="coming-soon.html">Blog</a>
+          <a href="docs.html">Docs</a>
+          <a href="mailto:ghanshyamrao108@gmail.com">Support</a>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
-          <a href="#">About</a>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
+          <a href="coming-soon.html">About</a>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms-of-service.html">Terms of Service</a>
         </div>
         <div class="footer-col">
           <h4>Legal</h4>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Cookie Policy</a>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms-of-service.html">Terms of Service</a>
+          <a href="cookie-policy.html">Cookie Policy</a>
         </div>
       </div>
     </div>
   </footer>
 
+  <div class="demo-modal" id="demoModal" aria-hidden="true" role="dialog" aria-labelledby="demoModalTitle">
+    <div class="demo-modal__dialog">
+      <div class="demo-modal__header">
+        <h3 id="demoModalTitle">DevOnboard Demo</h3>
+        <button type="button" class="demo-modal__close" id="closeDemoModal" aria-label="Close demo video">
+          &times;
+        </button>
+      </div>
+      <video class="demo-modal__video" id="demoVideo" controls preload="metadata">
+        <source src="assets/devon.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+
   <script>
     (function() {
       var reveals = document.querySelectorAll('.reveal');
+      var openDemoModal = document.getElementById('openDemoModal');
+      var closeDemoModal = document.getElementById('closeDemoModal');
+      var demoModal = document.getElementById('demoModal');
+      var demoVideo = document.getElementById('demoVideo');
+
       function reveal() {
         reveals.forEach(function(el) {
           var top = el.getBoundingClientRect().top;
@@ -193,9 +322,232 @@
           if (top < windowHeight - 80) el.classList.add('revealed');
         });
       }
+
+      function openModal() {
+        demoModal.classList.add('is-open');
+        demoModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (demoVideo) demoVideo.play();
+      }
+
+      function closeModal() {
+        demoModal.classList.remove('is-open');
+        demoModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (demoVideo) {
+          demoVideo.pause();
+          demoVideo.currentTime = 0;
+        }
+      }
+
+      if (openDemoModal && demoModal) {
+        openDemoModal.addEventListener('click', function(e) {
+          e.preventDefault();
+          openModal();
+        });
+      }
+
+      if (closeDemoModal) {
+        closeDemoModal.addEventListener('click', closeModal);
+      }
+
+      if (demoModal) {
+        demoModal.addEventListener('click', function(e) {
+          if (e.target === demoModal) closeModal();
+        });
+      }
+
+      window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && demoModal && demoModal.classList.contains('is-open')) {
+          closeModal();
+        }
+      });
+
       window.addEventListener('scroll', reveal);
       window.addEventListener('load', reveal);
       reveal();
+    })();
+  </script>
+
+  <script>
+    // Google Sign-In for the DevOnboard landing page.
+    // - Uses Google Identity Services (GIS) loaded from accounts.google.com/gsi/client.
+    // - The client_id below must be a "Web application" OAuth client whose Authorized
+    //   JavaScript origins include the domain that serves this page (e.g. http://localhost:5173
+    //   for dev and https://your-landing.example.com for production).
+    // - Set window.GOOGLE_CLIENT_ID before this script runs to override at deploy time.
+    (function () {
+      var DEFAULT_CLIENT_ID = '992737678384-s9e0pldanoj67glvfknvn1bk0492uneh.apps.googleusercontent.com';
+      var STORAGE_KEY = 'devonboard_landing_user';
+
+      var signedOutSlot = document.querySelector('[data-signed-out]');
+      var signedInSlot = document.querySelector('[data-signed-in]');
+      var btnWrap = document.getElementById('gsiHeaderBtn');
+      var pillTrigger = document.getElementById('userPillTrigger');
+      var avatar = document.getElementById('userAvatar');
+      var nameEl = document.getElementById('userName');
+      var menu = document.getElementById('userMenu');
+      var menuName = document.getElementById('userMenuName');
+      var menuEmail = document.getElementById('userMenuEmail');
+      var signOutBtn = document.getElementById('signOutBtn');
+
+      function decodeJwt(token) {
+        try {
+          var payload = token.split('.')[1];
+          var base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+          var pad = base64.length % 4 === 0 ? '' : '='.repeat(4 - (base64.length % 4));
+          var json = decodeURIComponent(
+            atob(base64 + pad)
+              .split('')
+              .map(function (c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); })
+              .join('')
+          );
+          return JSON.parse(json);
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function loadUser() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function saveUser(user) {
+        try {
+          if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+          else localStorage.removeItem(STORAGE_KEY);
+        } catch (_) {
+          // ignore
+        }
+      }
+
+      function setSlotVisible(el, visible) {
+        if (!el) return;
+        if (visible) {
+          el.hidden = false;
+          el.removeAttribute('hidden');
+          el.style.display = '';
+        } else {
+          el.hidden = true;
+          el.setAttribute('hidden', '');
+          el.style.display = 'none';
+        }
+      }
+
+      function applyUserToUI(user) {
+        if (user) {
+          setSlotVisible(signedOutSlot, false);
+          setSlotVisible(signedInSlot, true);
+          if (btnWrap) btnWrap.innerHTML = '';
+          if (avatar) {
+            avatar.src = user.picture || '';
+            avatar.alt = user.name || user.email || '';
+            avatar.style.display = user.picture ? '' : 'none';
+          }
+          if (nameEl) nameEl.textContent = (user.name || user.email || 'Account').split(' ')[0];
+          if (menuName) menuName.textContent = user.name || user.email || '';
+          if (menuEmail) menuEmail.textContent = user.email || '';
+        } else {
+          setSlotVisible(signedOutSlot, true);
+          setSlotVisible(signedInSlot, false);
+        }
+      }
+
+      function handleCredential(response) {
+        var payload = decodeJwt(response.credential);
+        if (!payload) return;
+        var user = {
+          id: payload.sub,
+          email: payload.email,
+          name: payload.name || payload.email,
+          picture: payload.picture || null,
+        };
+        saveUser(user);
+        applyUserToUI(user);
+      }
+
+      function renderGsiButton() {
+        if (!window.google || !window.google.accounts || !window.google.accounts.id || !btnWrap) return;
+        // Don't render the Google button if the user is already signed in.
+        if (loadUser()) {
+          btnWrap.innerHTML = '';
+          return;
+        }
+        btnWrap.innerHTML = '';
+        try {
+          window.google.accounts.id.initialize({
+            client_id: window.GOOGLE_CLIENT_ID || DEFAULT_CLIENT_ID,
+            callback: handleCredential,
+            ux_mode: 'popup',
+            auto_select: false,
+          });
+          window.google.accounts.id.renderButton(btnWrap, {
+            theme: 'filled_black',
+            size: 'medium',
+            shape: 'pill',
+            text: 'signin_with',
+            logo_alignment: 'left',
+          });
+        } catch (err) {
+          // Most common cause: the client_id is not a "Web" OAuth client, or this origin
+          // isn't in Authorized JavaScript origins.
+          btnWrap.innerHTML = '<a href="#pricing" class="btn btn-ghost">Pricing</a>';
+          console.warn('[DevOnboard] Google Sign-In could not render:', err);
+        }
+      }
+
+      function pollForGsi() {
+        var tries = 0;
+        var iv = setInterval(function () {
+          tries++;
+          if (window.google && window.google.accounts && window.google.accounts.id) {
+            clearInterval(iv);
+            renderGsiButton();
+          } else if (tries > 40) {
+            clearInterval(iv);
+            if (btnWrap) btnWrap.innerHTML = '<a href="#pricing" class="btn btn-ghost">Pricing</a>';
+          }
+        }, 150);
+      }
+
+      // Menu open/close
+      if (pillTrigger && menu) {
+        pillTrigger.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = !menu.hidden;
+          menu.hidden = open;
+          pillTrigger.setAttribute('aria-expanded', open ? 'false' : 'true');
+        });
+        document.addEventListener('click', function (e) {
+          if (!menu.hidden && !menu.contains(e.target) && e.target !== pillTrigger) {
+            menu.hidden = true;
+            pillTrigger.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+
+      if (signOutBtn) {
+        signOutBtn.addEventListener('click', function () {
+          try {
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+              window.google.accounts.id.disableAutoSelect();
+            }
+          } catch (_) { }
+          saveUser(null);
+          applyUserToUI(null);
+          if (menu) menu.hidden = true;
+          renderGsiButton();
+        });
+      }
+
+      // Init on load
+      applyUserToUI(loadUser());
+      pollForGsi();
     })();
   </script>
 </body>

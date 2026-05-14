@@ -4,6 +4,8 @@ import { Trash2, Info, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { fetchAllSoftware, getEstimatedInstallMinutes, type SoftwareItem } from '../lib/catalog';
 import { getSoftwareIcon } from '../lib/softwareIcons';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../components/Notifications';
 
 const CATEGORIES = ['All', 'browser', 'Development Tools', 'Dev Tools', 'Databases', 'Utilities', 'AI Tools', 'Custom'];
 
@@ -25,6 +27,8 @@ const FAILED_FETCH_HINT =
 export function SoftwareCatalog() {
   const navigate = useNavigate();
   const { state, toggleSelect, selectAll, setTotalSoftware, setQueue, addActivity, setInstalledIds, markUninstalled, setSelectedVersion } = useApp();
+  const { subscription } = useAuth();
+  const { notifyLocked } = useNotifications();
   const [list, setList] = useState<SoftwareItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -117,9 +121,23 @@ export function SoftwareCatalog() {
   const handleSelectAll = () => selectAll(filtered.filter((f) => f.enabled));
   const selectedCount = state.selectedIds.size;
 
-  const handleInstallSelected = () => {
+  const handleInstallSelected = async () => {
     const toInstall = list.filter((item) => state.selectedIds.has(item.id));
     if (toInstall.length === 0) return;
+    const api = window.electronAPI;
+    if (api?.checkInstallAllowed) {
+      const gate = await api.checkInstallAllowed();
+      if (!gate.allowed) {
+        notifyLocked(gate.reason || 'Install limit reached. Upgrade to install more software.');
+        return;
+      }
+    }
+    if (subscription.installsRemaining != null && toInstall.length > subscription.installsRemaining) {
+      notifyLocked(
+        `Your plan allows ${subscription.installsRemaining} more install${subscription.installsRemaining === 1 ? '' : 's'}. Upgrade to queue more at once.`
+      );
+      return;
+    }
     const ordered =
       toInstall.length > 1
         ? [...toInstall].sort((a, b) => getEstimatedInstallMinutes(a) - getEstimatedInstallMinutes(b))

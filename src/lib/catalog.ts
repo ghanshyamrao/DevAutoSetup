@@ -79,6 +79,15 @@ export function invalidateSoftwareCache(): void {}
 
 export async function fetchAllSoftware(): Promise<SoftwareItem[]> {
   try {
+    const localCatalog = await window.electronAPI?.getCatalogList?.();
+    if (Array.isArray(localCatalog) && localCatalog.length > 0) {
+      return localCatalog as SoftwareItem[];
+    }
+  } catch {
+    // Fall through to web fetch fallback.
+  }
+
+  try {
     const res = await fetch(CATALOG_URL);
     if (!res.ok) return FALLBACK;
     const data = await res.json();

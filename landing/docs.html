@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs | DevOnboard</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: "Inter", sans-serif;
+      background: #0b0d16;
+      color: #e8e9f2;
+      line-height: 1.65;
+    }
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 48px 20px;
+    }
+    h1, h2, h3 {
+      color: #ffffff;
+      line-height: 1.3;
+    }
+    .meta {
+      color: #b8bdd5;
+      margin-top: 0;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: #121528;
+      border: 1px solid #252b4a;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    a {
+      color: #9c7dff;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .toc a {
+      margin-right: 16px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 16px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>DevOnboard Docs</h1>
+    <p class="meta">Last updated: May 14, 2026</p>
+
+    <section class="card toc">
+      <h2>Quick Navigation</h2>
+      <a href="#overview">Overview</a>
+      <a href="#accounts-plans">Accounts &amp; Plans</a>
+      <a href="#analyze-application">Analyze the Application</a>
+      <a href="#getting-started">Getting Started</a>
+      <a href="#billing">Billing &amp; Stripe</a>
+      <a href="#support">Support</a>
+    </section>
+
+    <section id="overview" class="card">
+      <h2>Overview</h2>
+      <p>
+        DevOnboard is a developer onboarding desktop app designed to prepare a machine for coding
+        in under a minute. It combines diagnostics, package installation through winget, software
+        management, and a subscription model into one workflow.
+      </p>
+      <ul>
+        <li>Runs pre-install checks for admin rights, internet, and winget availability.</li>
+        <li>Installs tools and runtimes from a curated catalog.</li>
+        <li>Tracks installation status and basic activity for easier onboarding.</li>
+        <li>Authenticates with Google sign-in and gates features by subscription tier.</li>
+      </ul>
+    </section>
+
+    <section id="accounts-plans" class="card">
+      <h2>Accounts &amp; Plans</h2>
+      <p>
+        DevOnboard uses Google OAuth for sign-in. The first time you launch the app, click
+        <strong>Continue with Google</strong>; the system browser opens, you authorize, and the
+        app receives the token locally. No passwords are stored.
+      </p>
+      <h3>Plan tiers</h3>
+      <ul>
+        <li><strong>Free</strong> – 3 software installs total, full catalog browsing, Manage Software locked. No card required.</li>
+        <li><strong>Pro</strong> – $25 / month. Unlimited installs, full Manage Software access, version pinning, cancel any time.</li>
+        <li><strong>Lifetime</strong> – $100 one-time. Unlimited installs forever, all future updates included.</li>
+      </ul>
+      <p>
+        When you reach the install limit on Free, or open <em>Manage Software</em>, the app shows a
+        purple <em>Locked resource</em> notification with a direct link to the Pricing page. Your
+        current plan and remaining installs are always visible in the top-right chip in the app.
+      </p>
+    </section>
+
+    <section id="analyze-application" class="card">
+      <h2>Analyze the Application</h2>
+      <p>
+        Use this checklist to analyze your DevOnboard setup and validate your onboarding pipeline.
+      </p>
+      <h3>1. Environment Readiness</h3>
+      <ul>
+        <li>Confirm diagnostics pass for admin access, internet, and package manager health.</li>
+        <li>Review any failed checks before attempting bulk installs.</li>
+      </ul>
+      <h3>2. Catalog Quality</h3>
+      <ul>
+        <li>Verify essential tools for your team are included in the selected catalog.</li>
+        <li>Remove redundant packages to reduce installation time.</li>
+      </ul>
+      <h3>3. Installation Reliability</h3>
+      <ul>
+        <li>Run a full install on a clean machine and inspect success/failure logs.</li>
+        <li>Measure total setup time from first launch to coding-ready state.</li>
+      </ul>
+      <h3>4. Maintenance</h3>
+      <ul>
+        <li>Periodically review package versions and update catalog entries.</li>
+        <li>Use uninstall and software management to keep environments clean.</li>
+      </ul>
+    </section>
+
+    <section id="getting-started" class="card">
+      <h2>Getting Started</h2>
+      <ol>
+        <li>Download and install DevOnboard.</li>
+        <li>Sign in with your Google account when prompted.</li>
+        <li>Run diagnostics and resolve any blockers.</li>
+        <li>Select required tools from the software catalog.</li>
+        <li>Start installations and monitor progress in the dashboard.</li>
+        <li>If you need more than 3 installs or access to Manage Software, head to
+          <em>Plans &amp; Pricing</em> from the sidebar and click <strong>Subscribe via Stripe</strong>.
+        </li>
+      </ol>
+    </section>
+
+    <section id="billing" class="card">
+      <h2>Billing &amp; Stripe</h2>
+      <p>
+        Payments are handled entirely by Stripe Checkout. DevOnboard never sees your card details.
+      </p>
+      <h3>How verified checkout works</h3>
+      <ol>
+        <li>Click <strong>Subscribe via Stripe</strong> on the Pricing page.</li>
+        <li>The desktop app creates a Stripe Checkout Session bound to your Google user ID and opens it in your default browser.</li>
+        <li>Complete payment on Stripe&apos;s hosted page.</li>
+        <li>Stripe redirects back to a local callback (<code>http://localhost</code>) inside the app.</li>
+        <li>The app calls Stripe&apos;s API to verify the session is <code>paid</code> and belongs to <em>your</em> user ID — only then does your plan activate.</li>
+      </ol>
+      <p>
+        If you close the Stripe tab without paying, nothing changes. If verification fails for any
+        reason, your plan stays on Free. No manual &quot;I paid&quot; button exists.
+      </p>
+      <h3>Managing your subscription</h3>
+      <ul>
+        <li>Cancel a monthly Pro plan from the Stripe customer portal link in your receipt email.</li>
+        <li>Pro plans renew every 30 days — the app shows a renewal notification 3 days before.</li>
+        <li>Lifetime is one-time; nothing to manage afterwards.</li>
+      </ul>
+    </section>
+
+    <section id="support" class="card">
+      <h2>Support</h2>
+      <p>
+        Need help? Contact:
+        <a href="mailto:ghanshyamrao108@gmail.com">ghanshyamrao108@gmail.com</a>
+      </p>
+    </section>
+
+    <a class="back-link" href="index.html">&larr; Back to DevOnboard</a>
+  </main>
+</body>
+</html>

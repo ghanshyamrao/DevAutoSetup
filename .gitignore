@@ -9,3 +9,9 @@ dist-electron
 .env.trustedsigning
 
 electron-windows-sign.log
+
+# Google OAuth client secrets — never commit, use google-oauth-config.example.json as a template
+client_secret_*.apps.googleusercontent.com.json
+electron/google-oauth-config.json
+
+.claude/
